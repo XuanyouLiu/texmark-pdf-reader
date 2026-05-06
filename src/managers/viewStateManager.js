@@ -1,7 +1,7 @@
 import Logger from "../services/logger";
 import { activeEditors } from "./editorManager";
 
-const VIEW_STATE_STORAGE_PREFIX = "modernPdfViewer.viewState:";
+const VIEW_STATE_STORAGE_PREFIX = "texmarkPdfReader.viewState:";
 const VIEW_STATE_CHECKPOINT_DELAY = 1500;
 const viewStateMemoryCache = new Map();
 const viewStateCheckpointTimers = new Map();

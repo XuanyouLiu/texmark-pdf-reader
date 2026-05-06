@@ -1,11 +1,11 @@
 # API Reference
 
-`Modern PDF Preview` 暴露了一个简单 API，供其他 VS Code 扩展打开 PDF 预览。
+`TeXMark PDF Reader` 暴露了一个简单 API，供其他 VS Code 扩展打开 PDF 预览。
 
 ## Get API
 
 ```js
-const ext = vscode.extensions.getExtension("chocolatedesue.modern-pdf-preview");
+const ext = vscode.extensions.getExtension("zed.texmark-pdf-reader");
 const api = await ext.activate();
 const pdfApi = api.getV1Api();
 ```

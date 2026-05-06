@@ -8,6 +8,127 @@ import { getWebviewHtml, getErrorHtml } from "./webviewHtmlBuilder";
 
 const vscode = require("vscode");
 
+function requireNodeModule(moduleName) {
+  return eval("require")(moduleName);
+}
+
+function parseReverseSyncTeXOutput(output) {
+  const record = {};
+  let started = false;
+
+  for (const line of output.split("\n")) {
+    if (line.includes("SyncTeX result begin")) {
+      started = true;
+      continue;
+    }
+
+    if (line.includes("SyncTeX result end")) {
+      break;
+    }
+
+    if (!started) {
+      continue;
+    }
+
+    const separatorIndex = line.indexOf(":");
+    if (separatorIndex < 0) {
+      continue;
+    }
+
+    const key = line.slice(0, separatorIndex).toLowerCase();
+    if (key !== "input" && key !== "line" && key !== "column") {
+      continue;
+    }
+
+    const value = line.slice(separatorIndex + 1).trim();
+    record[key] = key === "input" ? value : Number(value);
+  }
+
+  if (record.input && Number.isFinite(record.line)) {
+    return {
+      input: record.input,
+      line: record.line,
+      column: Number.isFinite(record.column) ? record.column : 0,
+    };
+  }
+
+  throw new Error("Unable to parse reverse SyncTeX output.");
+}
+
+function formatSyncTeXCoordinate(value) {
+  return Number(value).toFixed(3).replace(/\.?0+$/, "");
+}
+
+function runReverseSyncTeX({ page, x, y, pdfPath }) {
+  const childProcess = requireNodeModule("child_process");
+  const path = requireNodeModule("path");
+  const command =
+    vscode.workspace.getConfiguration("latex-workshop").get("synctex.path", "synctex") || "synctex";
+  const args = [
+    "edit",
+    "-o",
+    `${page}:${formatSyncTeXCoordinate(x)}:${formatSyncTeXCoordinate(y)}:${pdfPath}`,
+  ];
+
+  Logger.log(`[SyncTeX] Reverse command: ${command} ${args.join(" ")}`);
+
+  return new Promise((resolve, reject) => {
+    const proc = childProcess.spawn(command, args, { cwd: path.dirname(pdfPath) });
+    let stdout = "";
+    let stderr = "";
+
+    proc.stdout?.setEncoding("utf8");
+    proc.stderr?.setEncoding("utf8");
+    proc.stdout?.on("data", (chunk) => {
+      stdout += chunk;
+    });
+    proc.stderr?.on("data", (chunk) => {
+      stderr += chunk;
+    });
+    proc.on("error", reject);
+    proc.on("exit", (exitCode) => {
+      if (exitCode !== 0) {
+        Logger.log(`[SyncTeX] Reverse failed with code ${exitCode}. stderr=${stderr || "<empty>"} stdout=${stdout || "<empty>"}`);
+        reject(new Error(stderr || stdout || `SyncTeX exited with code ${exitCode}.`));
+        return;
+      }
+
+      try {
+        resolve(parseReverseSyncTeXOutput(stdout));
+      } catch (error) {
+        Logger.log(`[SyncTeX] Reverse parse failed. stdout=${stdout || "<empty>"} stderr=${stderr || "<empty>"}`);
+        reject(error);
+      }
+    });
+  });
+}
+
+function resolveInputUri(input, pdfUri) {
+  const path = requireNodeModule("path");
+  const normalizedInput = input.replace(/(\r\n|\n|\r)/gm, "");
+  const resolvedPath = path.isAbsolute(normalizedInput)
+    ? normalizedInput
+    : path.resolve(path.dirname(pdfUri.fsPath), normalizedInput);
+
+  return vscode.Uri.file(resolvedPath);
+}
+
+async function openSynctexLocation(record, pdfUri) {
+  const uri = resolveInputUri(record.input, pdfUri);
+  const doc = await vscode.workspace.openTextDocument(uri);
+  const row = Math.max(0, Math.min(doc.lineCount - 1, record.line - 1));
+  const col = Math.max(0, record.column || 0);
+  const position = new vscode.Position(row, Math.min(col, doc.lineAt(row).text.length));
+  const visibleEditor = vscode.window.visibleTextEditors.find(
+    (editor) => editor.document.uri.toString() === uri.toString()
+  );
+  const viewColumn = visibleEditor?.viewColumn || vscode.ViewColumn.Beside;
+  const editor = await vscode.window.showTextDocument(doc, viewColumn);
+
+  editor.selection = new vscode.Selection(position, position);
+  await vscode.commands.executeCommand("revealLine", { lineNumber: row, at: "center" });
+}
+
 /**
  * @implements {vscode.CustomEditorProvider}
  */
@@ -88,6 +209,72 @@ export default class PDFEdit {
     }
 
     await editor.setupWebview(provider, panel, previewOptions);
+  }
+
+  static async locatePdf(context, pdfUri, target) {
+    const uriString = pdfUri.toString();
+    let entry = activeEditors.get(uriString);
+
+    if (!entry) {
+      await vscode.commands.executeCommand("vscode.openWith", pdfUri, VIEW_TYPE, vscode.ViewColumn.Beside);
+      entry = await PDFEdit.#waitForEditor(uriString);
+    }
+
+    if (!entry) {
+      vscode.window.showWarningMessage("Could not open PDF preview for SyncTeX.");
+      return;
+    }
+
+    entry.panel.reveal(entry.panel.viewColumn || vscode.ViewColumn.Beside, true);
+    entry.panel.webview.postMessage({
+      command: "synctex",
+      page: target.page,
+      x: target.x,
+      y: target.y,
+    });
+  }
+
+  static async reverseSyncTeX(dataProvider, message) {
+    const pdfUri = PDFEdit.#getDataProviderUriStatic(dataProvider);
+    if (!pdfUri?.fsPath) {
+      vscode.window.showWarningMessage("Reverse SyncTeX requires a local PDF file.");
+      return;
+    }
+
+    try {
+      const record = await runReverseSyncTeX({
+        page: message.page,
+        x: message.x,
+        y: message.y,
+        pdfPath: pdfUri.fsPath,
+      });
+      await openSynctexLocation(record, pdfUri);
+    } catch (error) {
+      vscode.window.showWarningMessage(`Reverse SyncTeX failed: ${error.message || String(error)}`);
+    }
+  }
+
+  static #getDataProviderUriStatic(dataProvider) {
+    if (dataProvider?.uri) {
+      return dataProvider.uri;
+    }
+
+    return null;
+  }
+
+  static async #waitForEditor(uriString, timeoutMs = 2500) {
+    const startedAt = Date.now();
+
+    while (Date.now() - startedAt < timeoutMs) {
+      const entry = activeEditors.get(uriString);
+      if (entry) {
+        return entry;
+      }
+
+      await new Promise((resolve) => setTimeout(resolve, 50));
+    }
+
+    return null;
   }
 
   /**
@@ -542,6 +729,9 @@ export default class PDFEdit {
           await this.handleWebviewReady(dataProvider, panel, previewOptions);
         } else if (message.command === 'log') {
           Logger.log(`[Webview] ${message.message}`);
+        } else if (message.command === 'warning') {
+          Logger.log(`[Webview Warning] ${message.message}`);
+          vscode.window.showWarningMessage(message.message);
         } else if (message.command === 'error') {
           if (!this.#rejectPendingSave(uriString, message.requestId, message.error)) {
             Logger.log(`[Webview Error] ${message.error}`);
@@ -561,6 +751,8 @@ export default class PDFEdit {
           }
         } else if (message.command === "open-link") {
           await this.#handleOpenLink(message, uri);
+        } else if (message.command === "reverse-synctex") {
+          await PDFEdit.reverseSyncTeX(dataProvider, message);
         } else if (message.command === 'dirty') {
           // Mark document as dirty
           Logger.log(`[Webview] Document marked dirty`);
@@ -629,7 +821,7 @@ export default class PDFEdit {
           Logger.show();
         } else if (selection === 'Report Issue') {
           vscode.env.openExternal(vscode.Uri.parse(
-            'https://github.com/chocolatedesue/vscode-pdf/issues/new'
+            'https://github.com/XuanyouLiu/texmark-pdf-reader/issues/new'
           ));
         }
       });

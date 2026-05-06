@@ -1,5 +1,13 @@
 # Changelog
 
+## [1.5.9] - 2026-05-06
+
+- Rebranded the extension as TeXMark PDF Reader.
+- Added dirty-state and Auto Save support for PDF annotation edits.
+- Added single page and two page default layout settings.
+- Added reverse SyncTeX from PDF clicks back to LaTeX source.
+- Tuned initial render settings and refreshed the viewer UI.
+
 ## [1.5.8] - 2026-03-29
 
 - Added SDK preview options for per-preview config and initial view state.

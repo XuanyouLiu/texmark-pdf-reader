@@ -1,20 +1,36 @@
 {
-  "name": "modern-pdf-preview",
-  "displayName": "Modern PDF Preview (WASM)",
-  "description": "A high-performance PDF previewer for VS Code powered by WebAssembly. Feature-rich, secure, and fast.",
-  "publisher": "chocolatedesue",
+  "name": "texmark-pdf-reader",
+  "displayName": "TeXMark PDF Reader",
+  "description": "Fast PDF reading with annotations, Auto Save support, and SyncTeX navigation for LaTeX projects.",
+  "publisher": "xuanyouliu",
   "icon": "icon.png",
   "author": {
-    "name": "chocolatedesue"
+    "name": "Zed Liu"
   },
-  "homepage": "https://github.com/chocolatedesue/vscode-pdf",
+  "homepage": "https://github.com/XuanyouLiu/texmark-pdf-reader",
   "license": "MIT",
   "categories": [
     "Visualization",
     "Programming Languages"
   ],
+  "keywords": [
+    "pdf",
+    "latex",
+    "synctex",
+    "annotation",
+    "autosave",
+    "cursor"
+  ],
   "repository": {
-    "url": "https://github.com/chocolatedesue/vscode-pdf"
+      "type": "git",
+      "url": "https://github.com/XuanyouLiu/texmark-pdf-reader.git"
+  },
+  "bugs": {
+      "url": "https://github.com/XuanyouLiu/texmark-pdf-reader/issues"
+  },
+  "galleryBanner": {
+      "color": "#0f172a",
+      "theme": "dark"
   },
   "version": "1.5.9",
   "browser": "./dist/extension.browser.js",
@@ -35,8 +51,8 @@
   "contributes": {
     "customEditors": [
       {
-        "viewType": "modernPdfViewer.PDFEdit",
-        "displayName": "Modern PDF Preview",
+        "viewType": "texmarkPdfReader.PDFEdit",
+        "displayName": "TeXMark PDF Reader",
         "selector": [
           {
             "filenamePattern": "*.pdf"
@@ -46,9 +62,9 @@
       }
     ],
     "configuration": {
-      "title": "Modern PDF Preview",
+      "title": "TeXMark PDF Reader",
       "properties": {
-        "modernPdfViewer.defaultZoomLevel": {
+        "texmarkPdfReader.defaultZoomLevel": {
           "type": "string",
           "default": "page-width",
           "enum": [
@@ -67,17 +83,32 @@
           ],
           "description": "The initial zoom level when opening a PDF file."
         },
-        "modernPdfViewer.defaultSpreadMode": {
+        "texmarkPdfReader.defaultSpreadMode": {
           "type": "string",
-          "default": "odd",
+          "default": "none",
           "enum": [
             "none",
             "odd",
             "even"
           ],
-          "description": "The initial spread mode when opening a PDF file."
+          "description": "Advanced: the initial PDF spread mode. This is used only when default page layout is set to advanced."
         },
-        "modernPdfViewer.tabBar": {
+        "texmarkPdfReader.defaultPageLayout": {
+          "type": "string",
+          "default": "single",
+          "enum": [
+            "single",
+            "two-page",
+            "advanced"
+          ],
+          "enumDescriptions": [
+            "Show one page at a time.",
+            "Show two pages at a time, keeping the first page as a cover page.",
+            "Use texmarkPdfReader.defaultSpreadMode directly."
+          ],
+          "description": "The default page layout when opening a PDF file."
+        },
+        "texmarkPdfReader.tabBar": {
           "type": "string",
           "default": "never",
           "enum": [
@@ -86,31 +117,53 @@
             "never"
           ],
           "description": "Control the visibility of the internal tab bar."
+        },
+        "texmarkPdfReader.renderBufferSize": {
+          "type": "number",
+          "default": 0,
+          "minimum": 0,
+          "maximum": 4,
+          "description": "Number of nearby pages kept rendered around the viewport. Lower values make the current page appear sooner; higher values make fast scrolling smoother."
+        },
+        "texmarkPdfReader.renderTileSize": {
+          "type": "number",
+          "default": 1024,
+          "enum": [
+            768,
+            1024,
+            1280
+          ],
+          "description": "Tile size in pixels for PDF page rendering. Larger tiles reduce render task overhead; smaller tiles can feel lighter on low-memory machines."
         }
       }
-    }
-  },
-  "commands": [
-    {
-      "command": "modernPdfViewer.forceSave",
-      "title": "Save PDF",
-      "category": "PDF Preview"
-    }
-  ],
-  "keybindings": [
-    {
-      "command": "modernPdfViewer.forceSave",
-      "key": "ctrl+s",
-      "mac": "cmd+s",
-      "when": "activeCustomEditorId == 'modernPdfViewer.PDFEdit'"
     },
-    {
-      "command": "workbench.action.closeActiveEditor",
-      "key": "ctrl+w",
-      "mac": "cmd+w",
-      "when": "activeCustomEditorId == 'modernPdfViewer.PDFEdit'"
-    }
-  ],
+    "commands": [
+      {
+        "command": "texmarkPdfReader.forceSave",
+        "title": "Save PDF",
+        "category": "TeXMark PDF Reader"
+      },
+      {
+        "command": "texmarkPdfReader.synctex",
+        "title": "SyncTeX to TeXMark PDF Reader",
+        "category": "TeXMark PDF Reader"
+      }
+    ],
+    "keybindings": [
+      {
+        "command": "texmarkPdfReader.forceSave",
+        "key": "ctrl+s",
+        "mac": "cmd+s",
+        "when": "activeCustomEditorId == 'texmarkPdfReader.PDFEdit'"
+      },
+      {
+        "command": "workbench.action.closeActiveEditor",
+        "key": "ctrl+w",
+        "mac": "cmd+w",
+        "when": "activeCustomEditorId == 'texmarkPdfReader.PDFEdit'"
+      }
+    ]
+  },
   "scripts": {
     "build": "webpack",
     "package": "sh scripts/package.sh",

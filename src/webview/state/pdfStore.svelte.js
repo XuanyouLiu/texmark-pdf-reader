@@ -3,7 +3,7 @@ import { vscodeService } from "../services/vscode.js";
 
 const DEFAULT_VIEW_STATE = {
   zoomLevel: "fit-width",
-  spreadMode: "odd",
+  spreadMode: "none",
   rotation: 0,
   scrollStrategy: "vertical",
 };
@@ -106,6 +106,7 @@ export const pdfState = $state({
   persistedViewState: null,
   registry: null,
   container: null,
+  isDirty: false,
 
   updateTheme() {
     const newTheme = getInitialTheme();
@@ -151,6 +152,22 @@ export const pdfState = $state({
     }
   },
 
+  markDirty() {
+    if (this.isDirty) {
+      return;
+    }
+
+    this.isDirty = true;
+    vscodeService.postMessage({
+      command: "dirty",
+      documentKey: this.currentDocumentKey,
+    });
+  },
+
+  markSaved() {
+    this.isDirty = false;
+  },
+
   setPreview(message, options = {}) {
     const { forceReload = false } = options;
     const newDocUri = message.pdfUri || "base64-data";
@@ -163,6 +180,9 @@ export const pdfState = $state({
     this.wasmUrl = message.wasmUri;
     this.messageConfig = message.config;
     this.error = null;
+    if (docChanged || srcChanged) {
+      this.markSaved();
+    }
 
     const restoredViewState = message.viewState ?? vscodeService.getState()?.viewState ?? null;
     this.syncViewState(restoredViewState, { notifyExtension: false });
@@ -215,6 +235,11 @@ export const pdfState = $state({
         throw new Error("PDF viewer is not ready to save yet.");
       }
 
+      const annotationPlugin = this.registry.getPlugin("annotation")?.provides();
+      if (annotationPlugin?.getState?.()?.hasPendingChanges) {
+        await annotationPlugin.commit().toPromise();
+      }
+
       const exportPlugin = this.registry.getPlugin("export")?.provides();
       if (!exportPlugin) {
         throw new Error("Export plugin is unavailable.");
@@ -226,6 +251,7 @@ export const pdfState = $state({
         data: new Uint8Array(arrayBuffer),
         requestId: message.requestId,
       });
+      this.markSaved();
     } catch (e) {
       vscodeService.postMessage({
         command: "error",
@@ -233,5 +259,34 @@ export const pdfState = $state({
         requestId: message.requestId,
       });
     }
+  },
+
+  handleSyncTeX(message) {
+    const scrollPlugin = this.registry?.getPlugin("scroll")?.provides();
+    const pageNumber = Number(message.page);
+
+    if (!scrollPlugin || !Number.isFinite(pageNumber) || pageNumber < 1) {
+      return;
+    }
+
+    const coreState = this.registry?.getStore?.()?.getState?.()?.core;
+    const activeDocument = coreState?.documents?.[coreState.activeDocumentId];
+    const page = activeDocument?.document?.pages?.[pageNumber - 1];
+    const x = Number(message.x);
+    const y = Number(message.y);
+    const pageCoordinates =
+      Number.isFinite(x) && Number.isFinite(y)
+        ? {
+            x: Math.max(0, x),
+            y: Math.max(0, page?.size?.height ? page.size.height - y : y),
+          }
+        : undefined;
+
+    scrollPlugin.scrollToPage({
+      pageNumber,
+      pageCoordinates,
+      behavior: "smooth",
+      alignY: 40,
+    });
   }
 });

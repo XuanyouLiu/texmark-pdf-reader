@@ -22,6 +22,9 @@
       case "save":
         await pdfState.handleSave(message);
         break;
+      case "synctex":
+        pdfState.handleSyncTeX(message);
+        break;
       case "error":
         pdfState.error = message.error;
         pdfState.loading = false;

@@ -1,11 +1,19 @@
 const vscode = require('vscode');
 
+function clampNumber(value, fallback, min, max) {
+    if (typeof value !== 'number' || !Number.isFinite(value)) {
+        return fallback;
+    }
+
+    return Math.min(max, Math.max(min, value));
+}
+
 /**
  * Fetches and maps configurations for the PDF webview.
  * @returns {Object}
  */
 export function getPdfConfiguration() {
-    const config = vscode.workspace.getConfiguration('modernPdfViewer');
+    const config = vscode.workspace.getConfiguration('texmarkPdfReader');
 
     // Map VS Code enum values to @embedpdf/snippet values
     const zoomMap = {
@@ -15,6 +23,11 @@ export function getPdfConfiguration() {
         'auto': 'automatic'
     };
 
+    const pageLayoutMap = {
+        'single': 'none',
+        'two-page': 'odd'
+    };
+
     const spreadMap = {
         'none': 'none',
         'odd': 'odd',
@@ -22,9 +35,14 @@ export function getPdfConfiguration() {
     };
 
     let zoomLevel = config.get('defaultZoomLevel', 'page-width');
-    const spreadMode = config.get('defaultSpreadMode', 'none');
+    const pageLayout = config.get('defaultPageLayout', 'single');
+    const spreadMode = pageLayout === 'advanced'
+        ? config.get('defaultSpreadMode', 'none')
+        : pageLayoutMap[pageLayout] || 'none';
 
     const tabBar = config.get('tabBar', 'never');
+    const renderBufferSize = clampNumber(config.get('renderBufferSize', 0), 0, 0, 4);
+    const renderTileSize = clampNumber(config.get('renderTileSize', 1024), 1024, 512, 1536);
 
     // Handle percentage strings (e.g., "100%")
     if (typeof zoomLevel === 'string' && zoomLevel.endsWith('%')) {
@@ -42,5 +60,7 @@ export function getPdfConfiguration() {
         scrollStrategy: 'vertical',
         rotation: 0,
         tabBar: tabBar,
+        renderBufferSize: renderBufferSize,
+        renderTileSize: renderTileSize,
     };
 }

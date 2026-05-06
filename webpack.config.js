@@ -1,5 +1,4 @@
 const path = require("path");
-const webpack = require("webpack");
 
 const extensionNodeConfig = {
   entry: {
@@ -52,6 +51,7 @@ const webviewConfig = {
   },
   output: {
     filename: "webview-bundle.js",
+    chunkFilename: "[name].js",
     path: path.resolve(__dirname, "media"),
     publicPath: "auto",
   },
@@ -99,15 +99,9 @@ const webviewConfig = {
   target: "web",
   optimization: {
     minimize: true,
-    splitChunks: false,
     moduleIds: 'deterministic',
     chunkIds: 'deterministic',
   },
-  plugins: [
-    new webpack.optimize.LimitChunkCountPlugin({
-      maxChunks: 1,
-    }),
-  ],
 };
 
 module.exports = [extensionNodeConfig, extensionWebConfig, webviewConfig];

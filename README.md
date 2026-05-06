@@ -1,57 +1,60 @@
-# Modern PDF Preview (WASM)
+# TeXMark PDF Reader
 
-<!-- markdownlint-disable MD033 -->
+[![Visual Studio Marketplace Version](https://img.shields.io/visual-studio-marketplace/v/xuanyouliu.texmark-pdf-reader?color=darkblue&logo=visual%20studio%20code&logoColor=007acc)][vsc-marketplace]
+[![Open VSX Version](https://img.shields.io/open-vsx/v/xuanyouliu/texmark-pdf-reader?color=darkgreen&label=Open%20VSX)][open-vsx]
+[![License](https://img.shields.io/github/license/XuanyouLiu/texmark-pdf-reader)](LICENSE)
 
-<div align="center">
+Fast PDF reading with annotations, Auto Save support, and SyncTeX navigation for LaTeX projects in VS Code and Cursor.
 
-[![Visual Studio Marketplace Version](https://img.shields.io/visual-studio-marketplace/v/chocolatedesue.modern-pdf-preview?color=darkblue&logo=visual%20studio%20code&logoColor=007acc)][vsc-marketplace]
-[![Visual Studio Marketplace Installs](https://img.shields.io/visual-studio-marketplace/i/chocolatedesue.modern-pdf-preview?color=darkblue&label=Install%20Count&logo=visual%20studio%20code&logoColor=007acc)][vsc-marketplace]
-[![GitHub license](https://img.shields.io/github/license/chocolatedesue/vscode-pdf)](https://github.com/chocolatedesue/vscode-pdf/blob/main/LICENSE)
-
-</div>
-
-Fast PDF preview for VS Code, built on `PDFium WASM` and `@embedpdf/*`.
+TeXMark is built on PDFium WASM and the EmbedPDF viewer stack. It focuses on the workflow of reading generated PDFs, marking them up, and jumping back to the corresponding LaTeX source.
 
 ## Features
 
-- Fast rendering with WASM
-- Annotation support
-- Save with `Ctrl+S` / `Cmd+S`
-- Desktop and Web support
-- Theme sync
-- Public API for other extensions
+- Annotate PDFs with highlights, text notes, shapes, ink, stamps, signatures, and form tools.
+- Mark PDFs dirty when annotations change, so VS Code and Cursor Auto Save can persist edits normally.
+- Save explicitly with `Ctrl+S` or `Cmd+S` when Auto Save is disabled.
+- Choose single page, two page, or advanced spread layouts.
+- Use `Cmd+click` on macOS or `Ctrl+click` on Windows/Linux in the PDF to reverse SyncTeX back to the matching `.tex` source.
+- Run `TeXMark PDF Reader: SyncTeX to TeXMark PDF Reader` from a `.tex` editor to jump from source to PDF.
+- Tune initial render behavior with buffer and tile size settings.
 
 ## Settings
 
-- `modernPdfViewer.defaultZoomLevel`
-- `modernPdfViewer.defaultSpreadMode`
-- `modernPdfViewer.tabBar`
+- `texmarkPdfReader.defaultZoomLevel`: Initial PDF zoom level.
+- `texmarkPdfReader.defaultPageLayout`: `single`, `two-page`, or `advanced`.
+- `texmarkPdfReader.defaultSpreadMode`: Advanced spread mode used when page layout is `advanced`.
+- `texmarkPdfReader.tabBar`: Controls the internal tab bar.
+- `texmarkPdfReader.renderBufferSize`: Number of nearby pages kept rendered around the viewport.
+- `texmarkPdfReader.renderTileSize`: Tile size for page rendering.
 
-## Notes
+## SyncTeX
 
-- Hidden PDF tabs keep their webview context to preserve state.
-- Memory usage grows with the number of open PDFs.
-- Close unused PDF tabs if you work with large files.
+Reverse SyncTeX requires a `.synctex.gz` file next to the PDF and the `synctex` command on your PATH. If you use LaTeX Workshop, TeXMark also respects `latex-workshop.synctex.path`.
 
-## Install
+For reverse navigation, open the generated PDF with TeXMark and `Cmd+click` or `Ctrl+click` the PDF location you want to inspect. TeXMark will ask SyncTeX for the matching source position and open that `.tex` file.
 
-- VS Code Marketplace: [chocolatedesue.modern-pdf-preview](https://marketplace.visualstudio.com/items?itemName=chocolatedesue.modern-pdf-preview)
-- Open VSX: [chocolatedesue.modern-pdf-preview](https://open-vsx.org/extension/chocolatedesue/modern-pdf-preview)
+## Development
 
-## Docs
+```sh
+npm install
+npm run build
+npx vsce package
+```
 
-- [API](docs/API.md)
-- [Architecture](docs/ARCHITECTURE.md)
-- [Development](docs/DEVELOPMENT.md)
-- [Reference Repository](docs/REFERENCE.md)
-- [Troubleshooting](docs/TROUBLESHOOTING.md)
+The VSIX contains the compiled extension host code in `dist/`, webview runtime assets in `media/`, docs, license, README, and the extension icon.
+
+## Publishing
+
+- VS Code Marketplace: [xuanyouliu.texmark-pdf-reader][vsc-marketplace]
+- Open VSX and Cursor: [xuanyouliu/texmark-pdf-reader][open-vsx]
+
+Publishing requires a VS Code Marketplace publisher token for `xuanyouliu` and an Open VSX token for the same namespace.
 
 ## Credits
 
-- [embed-pdf-viewer](https://github.com/embedpdf/embed-pdf-viewer)
-- [PDFium WASM](https://github.com/bblanchon/pdfium-binaries)
-- [mathematic-inc/vscode-pdf](https://github.com/mathematic-inc/vscode-pdf) as reference only
+TeXMark started from the MIT licensed Modern PDF Preview extension and keeps its foundation on PDFium WASM and EmbedPDF. Thanks to the EmbedPDF project and PDFium binaries maintainers for the underlying rendering stack.
 
 License: MIT
 
-[vsc-marketplace]: https://marketplace.visualstudio.com/items?itemName=chocolatedesue.modern-pdf-preview
+[vsc-marketplace]: https://marketplace.visualstudio.com/items?itemName=xuanyouliu.texmark-pdf-reader
+[open-vsx]: https://open-vsx.org/extension/xuanyouliu/texmark-pdf-reader

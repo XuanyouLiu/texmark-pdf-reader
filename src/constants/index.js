@@ -1,6 +1,6 @@
 // Extension configuration constants
-export const VIEW_TYPE = "modernPdfViewer.PDFEdit";
-export const OUTPUT_CHANNEL_NAME = "Modern PDF Preview";
+export const VIEW_TYPE = "texmarkPdfReader.PDFEdit";
+export const OUTPUT_CHANNEL_NAME = "TeXMark PDF Reader";
 
 // Media files
 export const MEDIA_FILES = {
