@@ -2,7 +2,7 @@
   "name": "texmark-pdf-reader",
   "displayName": "TeXMark PDF Reader",
   "description": "Fast PDF reading with annotations, Auto Save support, and SyncTeX navigation for LaTeX projects.",
-  "publisher": "xuanyouliu",
+  "publisher": "zed-org",
   "icon": "icon.png",
   "author": {
     "name": "Zed Liu"

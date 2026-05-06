@@ -1,8 +1,8 @@
 # TeXMark PDF Reader
 
-[![Visual Studio Marketplace Version](https://img.shields.io/visual-studio-marketplace/v/xuanyouliu.texmark-pdf-reader?color=darkblue&logo=visual%20studio%20code&logoColor=007acc)][vsc-marketplace]
-[![Open VSX Version](https://img.shields.io/open-vsx/v/xuanyouliu/texmark-pdf-reader?color=darkgreen&label=Open%20VSX)][open-vsx]
-[![License](https://img.shields.io/github/license/XuanyouLiu/texmark-pdf-reader)](LICENSE)
+[![Visual Studio Marketplace Version](https://img.shields.io/visual-studio-marketplace/v/zed-org.texmark-pdf-reader?color=darkblue&logo=visual%20studio%20code&logoColor=007acc)][vsc-marketplace]
+[![Open VSX Version](https://img.shields.io/open-vsx/v/zed-org/texmark-pdf-reader?color=darkgreen&label=Open%20VSX)][open-vsx]
+[![License](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
 
 Fast PDF reading with annotations, Auto Save support, and SyncTeX navigation for LaTeX projects in VS Code and Cursor.
 
@@ -45,10 +45,10 @@ The VSIX contains the compiled extension host code in `dist/`, webview runtime a
 
 ## Publishing
 
-- VS Code Marketplace: [xuanyouliu.texmark-pdf-reader][vsc-marketplace]
-- Open VSX and Cursor: [xuanyouliu/texmark-pdf-reader][open-vsx]
+- VS Code Marketplace: [zed-org.texmark-pdf-reader][vsc-marketplace]
+- Open VSX and Cursor: [zed-org/texmark-pdf-reader][open-vsx]
 
-Publishing requires a VS Code Marketplace publisher token for `xuanyouliu` and an Open VSX token for the same namespace.
+Publishing requires a VS Code Marketplace publisher token for `zed-org` and an Open VSX token for the same namespace.
 
 ## Credits
 
@@ -56,5 +56,5 @@ TeXMark started from the MIT licensed Modern PDF Preview extension and keeps its
 
 License: MIT
 
-[vsc-marketplace]: https://marketplace.visualstudio.com/items?itemName=xuanyouliu.texmark-pdf-reader
-[open-vsx]: https://open-vsx.org/extension/xuanyouliu/texmark-pdf-reader
+[vsc-marketplace]: https://marketplace.visualstudio.com/items?itemName=zed-org.texmark-pdf-reader
+[open-vsx]: https://open-vsx.org/extension/zed-org/texmark-pdf-reader
