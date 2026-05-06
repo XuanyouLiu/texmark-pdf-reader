@@ -8,6 +8,7 @@ references/**
 scripts/**
 .env
 .env.*
+.gitignore
 .gitmodules
 .prettierignore
 webpack.config.js
